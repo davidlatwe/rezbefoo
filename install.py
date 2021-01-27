@@ -13,18 +13,20 @@ REZ_SRC = "build/rezsrc"
 
 venv_pip_packages = [
     # pip package name here...
-    ".",  # foo
+    # "pymongo",
 ]
 
 
-def install_rez(dst):
+def load_src():
     git_clone(REZ_URL, REZ_SRC)
-    src_path = REZ_SRC + "/src"
 
-    rez_version = subprocess.check_output([
-        sys.executable, "-c",
-        "from rez.utils._version import _rez_version;print(_rez_version)"
-    ], universal_newlines=True, cwd=src_path).strip()
+    sys.path.insert(0, REZ_SRC + "/src")  # rez api
+    sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + "/src")  # custom cli
+
+
+def install(dst):
+    load_src()
+    rez_version = get_rez_version()
 
     dst = functools.reduce(
         lambda path, f: f(path),
@@ -34,60 +36,44 @@ def install_rez(dst):
          os.path.normpath]
     ).format(version=rez_version)
 
-    # if os.path.isdir(dst):
-    #     clean(dst)
-    # os.makedirs(dst)
-    #
-    # subprocess.check_call([sys.executable, "install.py", "-v", dst],
-    #                       cwd=REZ_SRC)
+    install_rez(dst)
 
-    install_pip_packages(dst)
+    venv_dir = get_virtualenv_bin_dir(dst)
+    py_exec = os.path.join(venv_dir, os.path.basename(sys.executable))
 
-    sys.path.insert(0, src_path)  # rez api required
-    install_kitz(dst)
+    pip_install_packages(py_exec, venv_pip_packages)
+    patch_custom_cli_tools(py_exec)
 
 
-def install_pip_packages(dst):
-    if not venv_pip_packages:
+def get_rez_version():
+    from rez.utils._version import _rez_version
+    return _rez_version
+
+
+def install_rez(dst):
+    if os.path.isdir(dst):
+        clean(dst)
+    os.makedirs(dst)
+
+    subprocess.check_call([sys.executable, "install.py", "-v", dst],
+                          cwd=REZ_SRC)
+
+
+def pip_install_packages(py_exec, names):
+    if not names:
         return
+    args = [
+        py_exec, "-m", "pip", "install"
+    ]
+    subprocess.check_call(args + names, cwd=os.path.dirname(os.path.realpath(__file__)))
 
-    py_executable = os.path.join(get_virtualenv_bin_dir(dst),
-                                 os.path.basename(sys.executable))
-    subprocess.check_call([
-        py_executable, "-m", "pip", "install"] + venv_pip_packages)
 
-
-def install_kitz(dst):
-    from rez.vendor.distlib.scripts import ScriptMaker
-    from foo.cli._entry_points import get_specifications
-
-    venv_bin_dir = get_virtualenv_bin_dir(dst)
-    dest_bin_path = os.path.join(venv_bin_dir, "rez")
-    py_executable = os.path.join(venv_bin_dir, os.path.basename(sys.executable))
-
-    specs = get_specifications()
-
-    # copy foo.cli into rez.cli (except '_' prefixed .py)
-    subprocess.check_call([py_executable, "-m", "foo.cli._install"])
-
-    # make bin scripts
-
-    maker = ScriptMaker(
-        # note: no filenames are referenced in any specifications, so
-        # source_dir is unused
-        source_dir=None,
-        target_dir=dest_bin_path
-    )
-
-    maker.executable = py_executable
-
-    maker.make_multiple(
-        specifications=specs.values(),
-        # the -E arg is crucial - it means rez cli tools still work within a
-        # rez-resolved env, even if PYTHONPATH or related env-vars would have
-        # otherwise changed rez's behaviour
-        options=dict(interpreter_args=["-E"])
-    )
+def patch_custom_cli_tools(py_exec):
+    pip_install_packages(py_exec, ["."])
+    args = [
+        py_exec, "-m", "ship.cli_patch._install"
+    ]
+    subprocess.check_call(args, cwd=os.path.dirname(os.path.realpath(__file__)) + "/src")
 
 
 def get_virtualenv_bin_dir(dest_dir):
@@ -148,4 +134,4 @@ if __name__ == "__main__":
     # else:
     #     print("Cancelled")
 
-    install_rez(location)
+    install(location)
