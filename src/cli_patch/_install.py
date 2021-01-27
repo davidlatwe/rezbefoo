@@ -14,13 +14,14 @@ def install_cli():
             continue
         shutil.copy2(os.path.join(script_dir, script), cli.__path__[0])
 
+    cli._util.register_subcommand("ship")
+
 
 def patch_binaries():
     # make bin scripts
     py_executable = sys.executable
     dest_bin_path = os.path.join(os.path.dirname(py_executable), "rez")
 
-    specs = get_specifications()
     maker = ScriptMaker(
         # note: no filenames are referenced in any specifications, so
         # source_dir is unused
@@ -30,7 +31,7 @@ def patch_binaries():
 
     maker.executable = py_executable
     maker.make_multiple(
-        specifications=specs.values(),
+        specifications=get_specifications().values(),
         # the -E arg is crucial - it means rez cli tools still work within a
         # rez-resolved env, even if PYTHONPATH or related env-vars would have
         # otherwise changed rez's behaviour
@@ -60,7 +61,7 @@ def get_specifications():
     for attr, obj in sys.modules[__name__].__dict__.items():
         scriptname = getattr(obj, "__scriptname__", None)
         if scriptname:
-            spec = "%s = ship.cli_patch._install:%s" % (scriptname, attr)
+            spec = "%s = cli_patch._install:%s" % (scriptname, attr)
             specs[scriptname] = spec
 
     return specs
@@ -73,40 +74,11 @@ def scriptname(name):
     return decorator
 
 
-def check_production_install():
-    path = os.path.dirname(sys.argv[0])
-    filepath = os.path.join(path, ".rez_production_install")
-
-    if not os.path.exists(filepath):
-        sys.stderr.write(
-            "Pip-based rez installation detected. Please be aware that rez command "
-            "line tools are not guaranteed to function correctly in this case. See "
-            "https://github.com/nerdvegas/rez/wiki/Installation#why-not-pip-for-production "
-            " for futher details.\n"
-        )
-
-
-def patch_subcommands():
-    from rez.cli._util import subcommands
-    subcommands.update({
-        "ship": {},
-    })
-
-
 # Entry points
-
-# @scriptname("rez")
-# def run_rez():
-#     check_production_install()
-#     patch_subcommands()
-#     from rez.cli._main import run
-#     return run()
 
 
 @scriptname("rez-ship")
 def run_rez_ship():
-    check_production_install()
-    patch_subcommands()
     from rez.cli._main import run
     return run("ship")
 

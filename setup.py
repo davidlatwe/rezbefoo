@@ -21,7 +21,7 @@ source_path = os.path.dirname(os.path.realpath(__file__))
 src_path = os.path.join(source_path, "src")
 sys.path.insert(0, src_path)
 
-from ship.cli_patch._install import get_specifications
+from cli_patch._install import get_specifications
 
 
 setup(
@@ -40,3 +40,5 @@ setup(
     package_dir={"": "src"},
     packages=find_packages("src"),
 )
+
+# patch rez bin

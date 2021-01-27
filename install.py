@@ -71,9 +71,9 @@ def pip_install_packages(py_exec, names):
 def patch_custom_cli_tools(py_exec):
     pip_install_packages(py_exec, ["."])
     args = [
-        py_exec, "-m", "ship.cli_patch._install"
+        py_exec, "-m", "cli_patch._install"
     ]
-    subprocess.check_call(args, cwd=os.path.dirname(os.path.realpath(__file__)) + "/src")
+    subprocess.check_call(args)
 
 
 def get_virtualenv_bin_dir(dest_dir):
