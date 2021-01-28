@@ -40,6 +40,7 @@ class InstallLibWithRezBinsPatch(install_lib.install_lib):
         super(InstallLibWithRezBinsPatch, self).run()
 
         rez_bin_scripts = self._patch_rez_binaries() or []
+        rez_cli_files = self._copy_cli_files()
         if self.dry_run:
             return
 
@@ -51,24 +52,26 @@ class InstallLibWithRezBinsPatch(install_lib.install_lib):
             self.outfiles.append(dst)
             self.copy_file(script, dst)
 
+        self.announce("Copying rez cli files", level=3)
+
+        for build_path, install_path in rez_cli_files:
+            self.outfiles.append(install_path)
+            self.copy_file(build_path, install_path)
+
     def _patch_rez_binaries(self):
         # referenced from rez's install.py
-        try:
-            from rez.vendor.distlib.scripts import ScriptMaker
-        except Exception as e:
-            self.announce("Skip patching rez bin tools: %s" % str(e), level=3)
-            return
+        from rez.vendor.distlib.scripts import ScriptMaker
 
         self.announce("Creating rez bin tools", level=3)
 
-        dest_bin_path = os.path.join(self.build_dir, "rez_bins")
-        self.mkpath(dest_bin_path)
+        temp_bin_path = os.path.join(self.build_dir, "rez_bins")
+        self.mkpath(temp_bin_path)
 
         maker = ScriptMaker(
             # note: no filenames are referenced in any specifications, so
             # source_dir is unused
             source_dir=None,
-            target_dir=dest_bin_path
+            target_dir=temp_bin_path
         )
         maker.executable = sys.executable
 
@@ -80,6 +83,26 @@ class InstallLibWithRezBinsPatch(install_lib.install_lib):
             options=dict(interpreter_args=["-E"])
         )
         return scripts
+
+    def _copy_cli_files(self):
+        from rez import cli
+
+        self.announce("Creating rez cli files transfer list", level=3)
+
+        dest_cli_path = cli.__path__[0]
+
+        transfer = list()
+        cli_dir = os.path.join(self.build_dir, "ship", "cli")
+        for file in [
+            # TODO: should be a better way to not hardcoding file names
+            "ship.json",
+            "ship.py",
+        ]:
+            build_path = os.path.join(cli_dir, file)
+            install_path = os.path.join(dest_cli_path, file)
+            transfer.append((build_path, install_path))
+
+        return transfer
 
 
 setup(
@@ -96,10 +119,9 @@ setup(
     entry_points={
         "console_scripts": get_specifications().values()
     },
-    namespace_packages=["rez", "rez.cli"],
+    packages=find_packages("src"),
     package_dir={"": "src"},
-    packages=find_namespace_packages("src"),
-    package_data={"rez.cli": ["*.json"]},
+    package_data={"ship": ["cli/*.json", "cli/*.py"]},
     include_package_data=True,
     zip_safe=False,
 )
