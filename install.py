@@ -8,7 +8,7 @@ import functools
 import subprocess
 
 
-REZ_URL = "https://github.com/MoonShineVFX/rez.git"
+REZ_URL = "https://github.com/davidlatwe/rez.git"
 REZ_SRC = "build/rezsrc"
 
 venv_pip_packages = [
@@ -18,7 +18,7 @@ venv_pip_packages = [
 
 
 def load_src():
-    git_clone(REZ_URL, REZ_SRC)
+    git_clone(REZ_URL, REZ_SRC, branch="plug-subcommand")
 
     # custom cli
     sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + "/src")
@@ -71,7 +71,7 @@ def pip_install_packages(py_exec, names):
 
 
 def patch_custom_cli_tools(py_exec):
-    pip_install_packages(py_exec, ["."])
+    pip_install_packages(py_exec, [".", "-vvv"])
 
 
 def get_virtualenv_bin_dir(dest_dir):
