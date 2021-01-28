@@ -20,8 +20,10 @@ venv_pip_packages = [
 def load_src():
     git_clone(REZ_URL, REZ_SRC)
 
-    sys.path.insert(0, REZ_SRC + "/src")  # rez api
-    sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + "/src")  # custom cli
+    # custom cli
+    sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + "/src")
+    # rez api, for querying version
+    sys.path.insert(0, REZ_SRC + "/src")
 
 
 def install(dst):
@@ -70,10 +72,6 @@ def pip_install_packages(py_exec, names):
 
 def patch_custom_cli_tools(py_exec):
     pip_install_packages(py_exec, ["."])
-    args = [
-        py_exec, "-m", "cli_patch._install"
-    ]
-    subprocess.check_call(args)
 
 
 def get_virtualenv_bin_dir(dest_dir):
