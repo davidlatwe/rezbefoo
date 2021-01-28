@@ -1,12 +1,12 @@
 from __future__ import print_function, with_statement
-from distutils.cmd import Command
+
 import os.path
 import sys
 
 
 try:
-    from setuptools import setup, find_packages
-    from setuptools.command import build_py
+    from setuptools import setup, find_packages, Command
+    from setuptools.command import build_py, install_data
 except ImportError:
     print("install failed - requires setuptools", file=sys.stderr)
     sys.exit(1)
@@ -83,7 +83,7 @@ class BuildPyCommand(build_py.build_py):
     """Custom build command."""
     def run(self):
         build_py.build_py.run(self)
-        self.run_command("patch_rez_bins")
+        self.run_command("install_data")
 
 
 setup(
@@ -95,7 +95,7 @@ setup(
     author_email="davidlatwe@gmail.com",
     license="LGPL",
     cmdclass={
-        "patch_rez_bins": PatchRezBins,
+        "install_data": PatchRezBins,
         "build_py": BuildPyCommand,
     },
     entry_points={
