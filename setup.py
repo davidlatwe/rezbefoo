@@ -28,34 +28,22 @@ from ship._version import version
 
 setup_args = dict(
     name="ship",
+    package_data={"ship": ["../rez/cli/*.json", "../rez/cli/*.py"]},
+    entry_points={"console_scripts": get_specifications().values()},
+    packages=find_packages("src"),
+    package_dir={"": "src"},
+    include_package_data=True,
+    zip_safe=False,
+    license="LGPL",
+    author="davidlatwe",
+    author_email="davidlatwe@gmail.com",
     version=version,
     description="Custom Rez cli tools",
     long_description=None,
-    author="davidlatwe",
-    author_email="davidlatwe@gmail.com",
-    license="LGPL",
-    entry_points={
-        "console_scripts": get_specifications().values()
-    },
-    packages=find_packages("src"),
-    package_dir={"": "src"},
-    package_data={"ship": ["cli/*.json", "cli/*.py"]},
-    include_package_data=True,
-    zip_safe=False,
 )
 
 
 class InstallLibWithRezBinsPatch(install_lib.install_lib):
-
-    def _copy_cli_files(self):
-        from rez import cli
-        self.announce("Creating rez cli files transfer list", level=3)
-        transfer = list()
-        cli_dir = os.path.join(self.build_dir, "ship", "cli")
-        for file in os.listdir(cli_dir):
-            transfer.append((os.path.join(cli_dir, file),
-                             os.path.join(cli.__path__[0], file)))
-        return transfer
 
     def _patch_rez_binaries(self):
         from rez.vendor.distlib.scripts import ScriptMaker
@@ -85,7 +73,6 @@ class InstallLibWithRezBinsPatch(install_lib.install_lib):
         super(InstallLibWithRezBinsPatch, self).run()
 
         rez_bin_scripts = self._patch_rez_binaries() or []
-        rez_cli_files = self._copy_cli_files()
         if self.dry_run:
             return
 
@@ -95,11 +82,6 @@ class InstallLibWithRezBinsPatch(install_lib.install_lib):
             dst = os.path.join(dest_bin_path, os.path.basename(script))
             self.outfiles.append(dst)
             self.copy_file(script, dst)
-
-        self.announce("Copying rez cli files", level=3)
-        for build_path, install_path in rez_cli_files:
-            self.outfiles.append(install_path)
-            self.copy_file(build_path, install_path)
 
 
 setup(
