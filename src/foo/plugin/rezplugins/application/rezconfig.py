@@ -1,2 +1,5 @@
 
-enable_cli = True
+foo = {
+    "cli_enabled": True,
+    "cli_behavior": {},
+}

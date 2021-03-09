@@ -2,6 +2,7 @@
 A
 """
 from __future__ import print_function
+from rez.application import Application
 
 
 cmd_behavior = {}
@@ -63,10 +64,15 @@ def command(opts, parser=None, extra_arg_groups=None):
             sys.exit(2)
 
 
-class ApplicationFoo(object):
+class ApplicationFoo(Application):
     schema_dict = {
-        "enable_cli": bool,
+        "cli_enabled": bool,
+        "cli_behavior": dict,
     }
+
+    @classmethod
+    def name(cls):
+        return "foo"
 
 
 def register_plugin():
