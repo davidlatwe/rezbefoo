@@ -21,7 +21,7 @@ def scriptname(name):
 
 # Entry points
 
-@scriptname("rez-ship")
+@scriptname("rez-foo")
 def run_rez_ship():
     from rez.cli._main import run
-    return run("ship")
+    return run("foo")

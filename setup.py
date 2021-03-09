@@ -22,13 +22,13 @@ source_path = os.path.dirname(os.path.realpath(__file__))
 src_path = os.path.join(source_path, "src")
 sys.path.insert(0, src_path)
 
-from ship._entry_points import get_specifications
-from ship._version import version
+from foo._entry_points import get_specifications
+from foo._version import version
 
 
 setup_args = dict(
-    name="ship",
-    package_data={"ship": ["../rez/cli/*.json", "../rez/cli/*.py"]},
+    name="rez-foo",
+    package_data={"foo": ["../rez/cli/*.json", "../rez/cli/*.py"]},
     entry_points={"console_scripts": get_specifications().values()},
     packages=find_packages("src"),
     package_dir={"": "src"},

@@ -1,7 +1,10 @@
 """
-Utility for displaying help for the given package.
+A
 """
 from __future__ import print_function
+
+
+cmd_behavior = {}
 
 
 def setup_parser(parser, completions=False):
@@ -58,3 +61,13 @@ def command(opts, parser=None, extra_arg_groups=None):
         except IndexError:
             print("No such help section.", file=sys.stderr)
             sys.exit(2)
+
+
+class ApplicationFoo(object):
+    schema_dict = {
+        "enable_cli": bool,
+    }
+
+
+def register_plugin():
+    return ApplicationFoo
