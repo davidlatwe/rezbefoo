@@ -24,20 +24,33 @@ sys.path.insert(0, src_path)
 
 from foo._entry_points import get_specifications
 from foo._version import version
+from rezplugins import application
 
+# TODO:
+#   * absolut path is not supported by wheel
+#   * patched bin is not collected by wheel
+# NOTE:
+#   - Can only use `pip install .` without wheel.
+#   - `python setup.py install` will pack module in egg, plugin will not be
+#      installed correctly.
+application_plugin = (application.__path__[0], [
+    "src/plugin/rezplugins/application/foo.py",
+    "src/plugin/rezplugins/application/rezconfig.py",
+])
 
 setup_args = dict(
-    name="rez-foo",
-    package_data={"foo": ["../rez/cli/*.json", "../rez/cli/*.py"]},
-    entry_points={"console_scripts": get_specifications().values()},
+    name="foo",
+    version=version,
     packages=find_packages("src"),
     package_dir={"": "src"},
+    entry_points={"console_scripts": get_specifications().values()},
+    package_data={"foo": []},
+    data_files=[application_plugin],
     include_package_data=True,
     zip_safe=False,
     license="LGPL",
     author="davidlatwe",
     author_email="davidlatwe@gmail.com",
-    version=version,
     description="Custom Rez cli tools",
     long_description=None,
 )
