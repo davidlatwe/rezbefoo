@@ -5,7 +5,10 @@ from __future__ import print_function
 from rez.application import Application
 
 
-cmd_behavior = {}
+command_behavior = {
+    "hidden": False,   # optional: bool
+    "arg_mode": None,  # optional: None, "passthrough", "grouped"
+}
 
 
 def setup_parser(parser, completions=False):
@@ -65,10 +68,7 @@ def command(opts, parser=None, extra_arg_groups=None):
 
 
 class ApplicationFoo(Application):
-    schema_dict = {
-        "cli_enabled": bool,
-        "cli_behavior": dict,
-    }
+    schema_dict = {}
 
     @classmethod
     def name(cls):
