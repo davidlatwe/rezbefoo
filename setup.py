@@ -1,5 +1,6 @@
 from __future__ import print_function, with_statement
 
+import fnmatch
 import os.path
 import sys
 
@@ -24,19 +25,22 @@ sys.path.insert(0, src_path)
 
 from foo._entry_points import get_specifications
 from foo._version import version
-from rezplugins import application
 
-# TODO:
-#   * absolut path is not supported by wheel
-#   * patched bin is not collected by wheel
-# NOTE:
-#   - Can only use `pip install .` without wheel.
-#   - `python setup.py install` will pack module in egg, plugin will not be
-#      installed correctly.
-application_plugin = (application.__path__[0], [
-    "src/plugin/rezplugins/application/foo.py",
-    "src/plugin/rezplugins/application/rezconfig-foo.py",
-])
+
+def find_files(pattern, path=None, root="foo"):
+    paths = []
+    basepath = os.path.realpath(os.path.join("src", root))
+    path_ = basepath
+    if path:
+        path_ = os.path.join(path_, path)
+
+    for root, _, files in os.walk(path_):
+        files = [x for x in files if fnmatch.fnmatch(x, pattern)]
+        files = [os.path.join(root, x) for x in files]
+        paths += [x[len(basepath):].lstrip(os.path.sep) for x in files]
+
+    return paths
+
 
 setup_args = dict(
     name="foo",
@@ -44,8 +48,7 @@ setup_args = dict(
     packages=find_packages("src"),
     package_dir={"": "src"},
     entry_points={"console_scripts": get_specifications().values()},
-    package_data={"foo": []},
-    data_files=[application_plugin],
+    package_data={"foo": find_files("*.py", path="_plugins")},
     include_package_data=True,
     zip_safe=False,
     license="LGPL",
