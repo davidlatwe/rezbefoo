@@ -35,7 +35,7 @@ from rezplugins import application
 #      installed correctly.
 application_plugin = (application.__path__[0], [
     "src/plugin/rezplugins/application/foo.py",
-    "src/plugin/rezplugins/application/rezconfig.py",
+    "src/plugin/rezplugins/application/rezconfig-foo.py",
 ])
 
 setup_args = dict(
@@ -51,7 +51,7 @@ setup_args = dict(
     license="LGPL",
     author="davidlatwe",
     author_email="davidlatwe@gmail.com",
-    description="Custom Rez cli tools",
+    description="Demoing Rez's application plugin",
     long_description=None,
 )
 

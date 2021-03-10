@@ -1,0 +1,4 @@
+
+foo = {
+    "message": "bar"
+}
