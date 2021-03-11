@@ -1,6 +1,5 @@
 from __future__ import print_function, with_statement
 
-import fnmatch
 import os.path
 import sys
 
@@ -27,28 +26,13 @@ from foo._entry_points import get_specifications
 from foo._version import version
 
 
-def find_files(pattern, path=None, root="foo"):
-    paths = []
-    basepath = os.path.realpath(os.path.join("src", root))
-    path_ = basepath
-    if path:
-        path_ = os.path.join(path_, path)
-
-    for root, _, files in os.walk(path_):
-        files = [x for x in files if fnmatch.fnmatch(x, pattern)]
-        files = [os.path.join(root, x) for x in files]
-        paths += [x[len(basepath):].lstrip(os.path.sep) for x in files]
-
-    return paths
-
-
 setup_args = dict(
     name="foo",
     version=version,
     packages=find_packages("src"),
     package_dir={"": "src"},
     entry_points={"console_scripts": get_specifications().values()},
-    package_data={"foo": find_files("*.py", path="_plugins")},
+    package_data={"foo": []},
     include_package_data=True,
     zip_safe=False,
     license="LGPL",
