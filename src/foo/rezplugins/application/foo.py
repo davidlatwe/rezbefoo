@@ -1,8 +1,8 @@
 """
 Demoing Rez application plugin subcommand
 """
-from __future__ import print_function
 from rez.application import Application
+from ._helper import ensure_top_module
 
 
 command_behavior = {
@@ -18,16 +18,17 @@ def setup_parser(parser, completions=False):
                         help="Print out message from config")
 
 
+@ensure_top_module
 def command(opts, parser=None, extra_arg_groups=None):
     from foo._version import version
-    import foo
+    from foo import lib
 
     if opts.version:
         print(version)
         return
 
     if opts.message:
-        foo.say()
+        lib.say()
 
 
 class ApplicationFoo(Application):
