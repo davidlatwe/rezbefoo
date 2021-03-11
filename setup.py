@@ -5,8 +5,8 @@ import sys
 
 
 try:
-    from setuptools import setup, find_packages, find_namespace_packages
-    from setuptools.command import install_lib
+    from setuptools import setup, find_packages
+    from setuptools.command import build_py
 except ImportError:
     print("install failed - requires setuptools", file=sys.stderr)
     sys.exit(1)
@@ -35,7 +35,6 @@ setup_args = dict(
     packages=find_packages("src"),
     package_dir={"": "src"},
     entry_points={"console_scripts": get_specifications().values()},
-    package_data={"rezbefoo": []},
     include_package_data=True,
     zip_safe=False,
     license="LGPL",
@@ -46,50 +45,46 @@ setup_args = dict(
 )
 
 
-class InstallLibWithRezBinsPatch(install_lib.install_lib):
+class BuildPyWithRezBinsPatch(build_py.build_py):
 
-    def _patch_rez_binaries(self):
+    def patch_rez_binaries(self):
         from rez.vendor.distlib.scripts import ScriptMaker
-        self.announce("Creating rez bin tools", level=3)
-        temp_bin_path = os.path.join(self.build_dir, "rez_bins")
-        self.mkpath(temp_bin_path)
+
+        self.announce("Generating rez bin tools...", level=3)
+
+        build_path = os.path.join("build", "rez_b")
+        self.mkpath(build_path)
         # referenced from rez's install.py
         maker = ScriptMaker(
             source_dir=None,
-            target_dir=temp_bin_path
+            target_dir=build_path
         )
         maker.executable = sys.executable
-        return maker.make_multiple(
+        rez_bin_scripts = maker.make_multiple(
             specifications=get_specifications().values(),
             options=dict(interpreter_args=["-E"])
         )
+        src_scripts = []
+        for script in rez_bin_scripts:
+            src_scripts.append(os.path.join(build_path, os.path.basename(script)))
 
-    def initialize_options(self):
-        super(InstallLibWithRezBinsPatch, self).initialize_options()
-        self.outfiles = []
+        rez_bin_dir = os.path.join(os.path.dirname(sys.executable), "rez")
+        relative_rez_bin_dir = os.path.relpath(rez_bin_dir, sys.prefix)
 
-    def get_outputs(self):
-        outfiles = super(InstallLibWithRezBinsPatch, self).get_outputs()
-        return outfiles + self.outfiles
+        data_files = [(relative_rez_bin_dir, src_scripts)]
+        if self.distribution.data_files is None:
+            self.distribution.data_files = data_files
+        else:
+            self.distribution.data_files += data_files
 
     def run(self):
-        super(InstallLibWithRezBinsPatch, self).run()
-
-        rez_bin_scripts = self._patch_rez_binaries() or []
-        if self.dry_run:
-            return
-
-        self.announce("Patching rez bin tools", level=3)
-        dest_bin_path = os.path.join(os.path.dirname(sys.executable), "rez")
-        for script in rez_bin_scripts:
-            dst = os.path.join(dest_bin_path, os.path.basename(script))
-            self.outfiles.append(dst)
-            self.copy_file(script, dst)
+        super(BuildPyWithRezBinsPatch, self).run()
+        self.patch_rez_binaries()
 
 
 setup(
     cmdclass={
-        "install_lib": InstallLibWithRezBinsPatch,
+        "build_py": BuildPyWithRezBinsPatch,
     },
     **setup_args
 )
