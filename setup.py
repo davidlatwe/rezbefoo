@@ -22,24 +22,27 @@ source_path = os.path.dirname(os.path.realpath(__file__))
 src_path = os.path.join(source_path, "src")
 sys.path.insert(0, src_path)
 
-from foo._entry_points import get_specifications
-from foo._version import version
+from rezbefoo._entry_points import get_specifications
+from rezbefoo._version import version
+
+with open(os.path.join(source_path, "README.md")) as f:
+    long_description = f.read()
 
 
 setup_args = dict(
-    name="foo",
+    name="rezbefoo",
     version=version,
     packages=find_packages("src"),
     package_dir={"": "src"},
     entry_points={"console_scripts": get_specifications().values()},
-    package_data={"foo": []},
+    package_data={"rezbefoo": []},
     include_package_data=True,
     zip_safe=False,
     license="LGPL",
     author="davidlatwe",
     author_email="davidlatwe@gmail.com",
     description="Demoing Rez's application plugin",
-    long_description=None,
+    long_description=long_description,
 )
 
 

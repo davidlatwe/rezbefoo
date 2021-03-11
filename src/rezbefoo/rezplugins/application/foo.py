@@ -13,22 +13,23 @@ command_behavior = {
 
 def setup_parser(parser, completions=False):
     parser.add_argument("--version", action="store_true",
-                        help="Print out version of 'foo'")
+                        help="Print out version of this plugin command.")
     parser.add_argument("-m", "--message", action="store_true",
-                        help="Print out message from config")
+                        help="Print out message from config.")
 
 
 @ensure_top_module
 def command(opts, parser=None, extra_arg_groups=None):
-    from foo._version import version
-    from foo import lib
+    from rezbefoo._version import version
+    from rezbefoo import lib
 
     if opts.version:
         print(version)
         return
 
     if opts.message:
-        lib.say()
+        msg = lib.get_message()
+        print(msg)
 
 
 class ApplicationFoo(Application):

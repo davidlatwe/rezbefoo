@@ -1,6 +1,6 @@
 
 
-def say():
+def get_message():
     from rez.config import config
     message = config.plugins.application.foo.message
-    print(message)
+    return message
