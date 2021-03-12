@@ -6,7 +6,7 @@ A proof of concept for demoing how Rez's application type plugin can be used.
 
 1. Install Plugin
 
-```console
+```shell
 # in rez venv
 cd path-to/rezbefoo
 pip install .
@@ -23,7 +23,7 @@ plugin_module = ["rezbefoo"]
 
 3. Run Command
 
-```console
+```shell
 # on rez activated
 rez foo -m
 # or,
