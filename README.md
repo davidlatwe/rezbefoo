@@ -2,40 +2,30 @@
 A proof of concept for demoing how Rez's application type plugin can be used.
 
 
-### Option A
+### Steps
+
+1. Install Plugin
 
 ```console
-$ # in rez venv
-$ cd path-to/rezbefoo
-$ pip install -e .
+# in rez venv
+cd path-to/rezbefoo
+pip install .
+# or, for development
+pip install -e .
 ```
 
-```console
-$ # in rez venv
-$ cd path-to/rezbefoo
-$ pip install .
-```
+2. Configure Rez
 
 ```python
 # in your rezconfig.py
 plugin_module = ["rezbefoo"]
 ```
 
-```console
-$ # on rez activated
-$ rez foo -m
-$ # or,
-$ rez-foo -m
-```
-
-### Option B
-
-```python
-# in your rezconfig.py
-plugin_path = ["path-to/rezbefoo/src/rezbefoo"]
-```
+3. Run Command
 
 ```console
-$ # on rez activated
-$ rez foo -m
+# on rez activated
+rez foo -m
+# or,
+rez-foo -m
 ```
