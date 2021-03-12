@@ -34,7 +34,6 @@ setup_kwargs = dict(
     version=version,
     packages=find_packages("src"),
     package_dir={"": "src"},
-    entry_points={"console_scripts": get_specifications().values()},
     include_package_data=True,
     zip_safe=False,
     license="LGPL",
