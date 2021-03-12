@@ -2,7 +2,6 @@
 Demoing Rez application plugin subcommand
 """
 from rez.application import Application
-from ._helper import ensure_top_module
 
 
 command_behavior = {
@@ -18,7 +17,6 @@ def setup_parser(parser, completions=False):
                         help="Print out message from config.")
 
 
-@ensure_top_module
 def command(opts, parser=None, extra_arg_groups=None):
     from rezbefoo._version import version
     from rezbefoo import lib
