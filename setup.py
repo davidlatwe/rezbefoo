@@ -29,7 +29,7 @@ with open(os.path.join(source_path, "README.md")) as f:
     long_description = f.read()
 
 
-setup_args = dict(
+setup_kwargs = dict(
     name="rezbefoo",
     version=version,
     packages=find_packages("src"),
@@ -91,7 +91,7 @@ class BuildPyWithRezBinsPatch(build_py.build_py):
 
         # Create additional build dir for binaries, so they won't be handled
         # as regular builds under "build/lib".
-        build_path = os.path.join("build", "rez_b")
+        build_path = os.path.join("build", "rez_bins")
         self.mkpath(build_path)
 
         # Make binaries, referenced from rez's install.py
@@ -117,5 +117,5 @@ setup(
     cmdclass={
         "build_py": BuildPyWithRezBinsPatch,
     },
-    **setup_args
+    **setup_kwargs
 )
