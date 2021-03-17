@@ -4,10 +4,9 @@ import os.path
 import sys
 
 
-from distutils.command import install_data
 try:
-    from setuptools import setup, find_packages
-    from setuptools.command import build_py
+    from setuptools import setup, find_packages, Distribution
+    from setuptools.command import install_scripts
 except ImportError:
     print("install failed - requires setuptools", file=sys.stderr)
     sys.exit(1)
@@ -28,21 +27,77 @@ from rezbefoo._version import version
 
 
 def patch_production_scripts(target_dir):
-    from rez.vendor.distlib.scripts import ScriptMaker
-    maker = ScriptMaker(source_dir=None, target_dir=target_dir)
-    maker.executable = sys.executable
-    scripts = maker.make_multiple(
-        specifications=get_specifications().values(),
-        options=dict(interpreter_args=["-E"])
-    )
+    from pip._vendor.distlib.util import get_export_entry
+
+    python_script_template = r'''# -*- coding: utf-8 -*-
+import re
+import os
+import sys
+if "REZ_PRODUCTION_PATH" in os.environ:
+    sys.path.append(os.environ["REZ_PRODUCTION_PATH"])
+from %(module)s import %(import_name)s
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(%(func)s())
+'''
+    shell_script_template = r"""@echo off
+set /p _rez_python=< %%~dp0.rez_production_install
+%%_rez_python:~2%% -E %%~dp0%(name)s.py
+"""
+    scripts = []
+    for spec in get_specifications().values():
+        entry = get_export_entry(spec)
+        shell_script = os.path.join(target_dir, entry.name) + ".cmd"
+        python_script = os.path.join(target_dir, entry.name) + ".py"
+
+        with open(python_script, "w") as s:
+            s.write(python_script_template % dict(
+                module=entry.prefix,
+                import_name=entry.suffix.split('.')[0],
+                func=entry.suffix
+            ))
+        with open(shell_script, "w") as s:
+            s.write(shell_script_template % dict(name=entry.name))
+        scripts += [python_script, shell_script]
+
+    validation_file = os.path.join(target_dir, ".rez_production_install")
+    with open(validation_file, "w") as vfn:
+        vfn.write("#!python\n")
+        vfn.write("_rez_version")
+    scripts.append(validation_file)
+
     return scripts
+
+
+class install_rez_script(install_scripts.install_scripts):
+    # TODO: change to get this class form rez
+    def initialize_options(self):
+        install_scripts.install_scripts.initialize_options(self)
+        self.no_rez_bin = False
+
+    def finalize_options(self):
+        install_scripts.install_scripts.finalize_options(self)
+        self.set_undefined_options('install', ('no_rez_bin', 'no_rez_bin'))
+
+    def run(self):
+        install_scripts.install_scripts.run(self)
+        self.patch_rez_binaries()
+
+    def patch_rez_binaries(self):
+        if self.no_rez_bin:
+            return
+        build_path = os.path.join(self.build_dir, "rez")
+        install_path = os.path.join(self.install_dir, "rez")
+        self.mkpath(build_path)
+        patch_production_scripts(build_path)
+        self.outfiles += self.copy_tree(build_path, install_path)
 
 
 with open(os.path.join(source_path, "README.md")) as f:
     long_description = f.read()
 
 
-setup_kwargs = dict(
+setup(
     name="rezbefoo",
     version=version,
     packages=find_packages("src"),
@@ -54,68 +109,10 @@ setup_kwargs = dict(
     author_email="davidlatwe@gmail.com",
     description="Demoing Rez's application plugin",
     long_description=long_description,
+    cmdclass={
+        "install_scripts": install_rez_script,
+    },
     # install_requires=[
     #     "rez>=2.78.0",  # on development
     # ],
-)
-
-
-class RezBuildPy(build_py.build_py):
-
-    def run(self):
-        build_py.build_py.run(self)
-        self.patch_rez_binaries()
-
-    def _append(self, data_files):
-        if self.distribution.data_files is None:
-            self.distribution.data_files = []
-        self.distribution.data_files += data_files
-
-    def patch_rez_binaries(self):
-        # Create additional build dir for binaries, so they won't be handled
-        # as regular builds under "build/lib".
-        build_path = os.path.join("build", "rez_bins")
-        self.mkpath(build_path)
-        production_scripts = patch_production_scripts(build_path)
-        self._append([
-            # We don't know script install dir at this moment, therefore we
-            # use a placeholder and pickup later.
-            ("_production_script_:rez", production_scripts)
-        ])
-
-
-class InstallData(install_data.install_data):
-
-    def initialize_options(self):
-        install_data.install_data.initialize_options(self)
-        self.script_dir = None
-
-    def finalize_options(self):
-        install_data.install_data.finalize_options(self)
-        self.set_undefined_options(
-            'install', ('install_scripts', 'script_dir'),
-        )
-
-    def run(self):
-        self.patch_rez_binaries()
-        install_data.install_data.run(self)
-
-    def patch_rez_binaries(self):
-        data_files = []
-        for dst, src in self.data_files:
-            if dst.startswith("_production_script_:"):
-                # Compute relative script install path
-                sub_dir = dst.split(":")[-1]
-                abs_dst_dir = os.path.join(self.script_dir, sub_dir)
-                dst = os.path.relpath(abs_dst_dir, self.install_dir)
-            data_files.append((dst, src))
-        self.data_files[:] = data_files
-
-
-setup(
-    cmdclass={
-        "build_py": RezBuildPy,
-        "install_data": InstallData,
-    },
-    **setup_kwargs
 )
